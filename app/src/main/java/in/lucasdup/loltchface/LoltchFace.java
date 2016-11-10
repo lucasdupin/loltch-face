@@ -43,9 +43,6 @@ public class LoltchFace extends BaseWatchFace {
     @Override
     public void onDraw(Canvas canvas, Rect bounds, float hour, float minute, float seconds) {
 
-        hour = 3;
-        minute = 0;
-
         float centerX = bounds.centerX();
         float centerY = bounds.centerY();
 
