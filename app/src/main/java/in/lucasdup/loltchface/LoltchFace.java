@@ -13,16 +13,12 @@ import android.widget.Toast;
 
 public class LoltchFace extends BaseWatchFace {
 
-    private static final float HOUR_STROKE_WIDTH = 5f;
-    private static final float MINUTE_STROKE_WIDTH = 3f;
-    private static final float SECOND_TICK_STROKE_WIDTH = 2f;
-    private static final float CENTER_GAP_AND_CIRCLE_RADIUS = 4f;
-    private static final int SHADOW_RADIUS = 6;
+    private static final float STROKE_WIDTH = 5f;
+    private static final float HAND_SIZE = 35f;
+    private static final float X_OFFSET = 70f;
 
-    private Paint mHourPaint;
-    private Paint mMinutePaint;
-    private Paint mSecondPaint;
-    private Paint mTickAndCirclePaint;
+    private Paint mHandPaint;
+    private Paint mOPaint;
 
     @Override
     public boolean updatesEverySecond() {
@@ -31,102 +27,59 @@ public class LoltchFace extends BaseWatchFace {
 
     @Override
     public void onCreate() {
-        /* Set defaults for colors */
-        int mWatchHandColor = Color.WHITE;
-        int mWatchHandHighlightColor = Color.RED;
-        int mWatchHandShadowColor = Color.BLACK;
+        mHandPaint = new Paint();
+        mHandPaint.setColor(Color.WHITE);
+        mHandPaint.setStrokeWidth(STROKE_WIDTH);
+        mHandPaint.setAntiAlias(true);
+        mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
-        mHourPaint = new Paint();
-        mHourPaint.setColor(mWatchHandColor);
-        mHourPaint.setStrokeWidth(HOUR_STROKE_WIDTH);
-        mHourPaint.setAntiAlias(true);
-        mHourPaint.setStrokeCap(Paint.Cap.ROUND);
-        mHourPaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-
-        mMinutePaint = new Paint();
-        mMinutePaint.setColor(mWatchHandColor);
-        mMinutePaint.setStrokeWidth(MINUTE_STROKE_WIDTH);
-        mMinutePaint.setAntiAlias(true);
-        mMinutePaint.setStrokeCap(Paint.Cap.ROUND);
-        mMinutePaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-
-        mSecondPaint = new Paint();
-        mSecondPaint.setColor(mWatchHandHighlightColor);
-        mSecondPaint.setStrokeWidth(SECOND_TICK_STROKE_WIDTH);
-        mSecondPaint.setAntiAlias(true);
-        mSecondPaint.setStrokeCap(Paint.Cap.ROUND);
-        mSecondPaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-
-        mTickAndCirclePaint = new Paint();
-        mTickAndCirclePaint.setColor(mWatchHandColor);
-        mTickAndCirclePaint.setStrokeWidth(SECOND_TICK_STROKE_WIDTH);
-        mTickAndCirclePaint.setAntiAlias(true);
-        mTickAndCirclePaint.setStyle(Paint.Style.STROKE);
-        mTickAndCirclePaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-
-        mHourPaint.setAntiAlias(true);
-        mMinutePaint.setAntiAlias(true);
-        mSecondPaint.setAntiAlias(true);
-        mTickAndCirclePaint.setAntiAlias(true);
-
-        mHourPaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-        mMinutePaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-        mSecondPaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
-        mTickAndCirclePaint.setShadowLayer(SHADOW_RADIUS, 0, 0, mWatchHandShadowColor);
+        mOPaint = new Paint();
+        mOPaint.setColor(Color.WHITE);
+        mOPaint.setStrokeWidth(STROKE_WIDTH);
+        mOPaint.setAntiAlias(true);
+        mOPaint.setStyle(Paint.Style.STROKE);
     }
 
     @Override
     public void onDraw(Canvas canvas, Rect bounds, float hour, float minute, float seconds) {
 
-        float mCenterX = bounds.centerX();
-        float mCenterY = bounds.centerY();
+        hour = 3;
+        minute = 0;
 
-        /*
-         * Calculate lengths of different hands based on watch screen size.
-         */
-        float mSecondHandLength = (float) (mCenterX * 0.875);
-        float sMinuteHandLength = (float) (mCenterX * 0.75);
-        float sHourHandLength = (float) (mCenterX * 0.5);
+        float centerX = bounds.centerX();
+        float centerY = bounds.centerY();
 
-        // Background colors
+        // Background color
         canvas.drawColor(Color.BLACK);
+
+        // Hands
+        drawHands(canvas, hour, minute, centerX + X_OFFSET, centerY + HAND_SIZE / 2f);
+        drawHands(canvas, hour, minute, centerX - X_OFFSET, centerY + HAND_SIZE / 2f);
+
+        // Small circle on top
+        canvas.drawCircle(centerX, centerY, HAND_SIZE / 2f, mOPaint);
+
+    }
+
+    private void drawHands(Canvas canvas, float hour, float minute, float x, float y) {
+        canvas.save();
 
         /*
          * These calculations reflect the rotation in degrees per unit of time, e.g.,
          * 360 / 60 = 6 and 360 / 12 = 30.
          */
-        final float secondsRotation = seconds * 6f;
         final float minutesRotation = minute * 6f;
         final float hourHandOffset = minute / 2f;
         final float hoursRotation = (hour * 30) + hourHandOffset;
 
-        // Draw hands
-        canvas.save();
-
-        canvas.rotate(hoursRotation, mCenterX, mCenterY);
-        canvas.drawLine(mCenterX, mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                mCenterX, mCenterY - sHourHandLength,
-                mHourPaint);
-
-        canvas.rotate(minutesRotation - hoursRotation, mCenterX, mCenterY);
-        canvas.drawLine(mCenterX, mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                mCenterX, mCenterY - sMinuteHandLength,
-                mMinutePaint);
-
-        // Do not draw seconds hand on ambient mode
-        if (!isAmbient) {
-            canvas.rotate(secondsRotation - minutesRotation, mCenterX, mCenterY);
-            canvas.drawLine(mCenterX, mCenterY - CENTER_GAP_AND_CIRCLE_RADIUS,
-                    mCenterX, mCenterY - mSecondHandLength,
-                    mSecondPaint);
-
-        }
-
-        // Small circle on top
-        canvas.drawCircle(mCenterX, mCenterY, CENTER_GAP_AND_CIRCLE_RADIUS, mTickAndCirclePaint);
+        // Hours
+        canvas.rotate(hoursRotation, x, y);
+        canvas.drawLine(x, y, x, y - HAND_SIZE * 0.6f, mHandPaint);
+        // Minutes
+        canvas.rotate(minutesRotation - hoursRotation, x, y);
+        canvas.drawLine(x, y, x, y - HAND_SIZE, mHandPaint);
 
         canvas.restore();
-
     }
 
     @Override
